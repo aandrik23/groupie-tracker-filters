@@ -1,0 +1,54 @@
+package groupie_tracker_search
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+var (
+	cachedArtists []Artist
+	cacheMu       sync.RWMutex       // Mutex to manage concurrent access to the cache
+	cacheTime     time.Time          // Timestamp of the last cache update
+	cacheDuration = 30 * time.Second // Duration before refreshing the cache
+)
+
+// Fetch and cache data if necessary
+func getCachedArtists() ([]Artist, error) {
+	cacheMu.RLock()
+	// Return cached data if it's still fresh
+	if time.Since(cacheTime) < cacheDuration {
+		cachedData := cachedArtists
+		cacheMu.RUnlock()
+		return cachedData, nil
+	}
+	cacheMu.RUnlock()
+
+	// Acquire write lock to refresh cache
+	cacheMu.Lock()
+	defer cacheMu.Unlock()
+
+	// Double-check cache expiration in case of a race condition
+	if time.Since(cacheTime) < cacheDuration {
+		return cachedArtists, nil
+	}
+
+	// Fetch fresh data
+	artists, err := FetchAllData()
+	if err != nil {
+		return nil, err
+	}
+
+	// Update the cache
+	cachedArtists = artists
+	cacheTime = time.Now()
+
+	min, max := CreationDates(cachedArtists)
+
+	fmt.Println(min, max)
+
+	min2, max2 := FirstAlbum(cachedArtists)
+
+	fmt.Println(min2, max2)
+	return cachedArtists, nil
+}
