@@ -50,5 +50,13 @@ func getCachedArtists() ([]Artist, error) {
 	min2, max2 := FirstAlbum(cachedArtists)
 
 	fmt.Println(min2, max2)
+
+	Members(cachedArtists)
+
+	for _, members := range cachedArtists {
+		fmt.Printf("id : %v  Num : %v \n", members.ID, len(members.Members))
+
+	}
+
 	return cachedArtists, nil
 }
